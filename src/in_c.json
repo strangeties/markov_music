@@ -3449,11 +3449,40 @@
     "voices": [
         {
             "start_id": "1p1",
-            "transpose_8va": 0
+            "oscillator": "triangle",
+            "volume": -3,
+            "pan": 0.01
         },
         {
             "start_id": "1p1",
-            "transpose_8va": 1
+            "transpose_8va": 1,
+            "oscillator": "sine",
+            "volume": 3,
+            "pan": -0.2
+        },
+        {
+            "start_id": "1p1",
+            "transpose_8va": 1,
+            "oscillator": "sawtooth",
+            "pan": 0.5,
+            "lpf_cutoff_hz": 400
+        },
+        {
+            "start_id": "1p1",
+            "transpose_8va": 2,
+            "oscillator": "sine",
+            "ping_pong_delay_time": "4n",
+            "volume": -12,
+            "chorus_depth": 0.8
+        },
+        {
+            "start_id": "1p1",
+            "transpose_8va": 1,
+            "oscillator": "square",
+            "lpf_cutoff_hz": 400,
+            "chorus_depth": 0.6,
+            "pan": -0.8,
+            "volume": -18
         }
     ]
 }

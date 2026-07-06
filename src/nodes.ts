@@ -19,6 +19,13 @@ export interface NodeConfig {
 export interface VoiceConfig {
     start_id: string;
     transpose_8va: number;
+    oscillator: Tone.ToneOscillatorType;
+    sustain_volume: number;
+    lpf_cutoff_hz: number;
+    ping_pong_delay_time: string;
+    chorus_depth: number;
+    pan: number;
+    volume: number;
 }
 
 export interface MarkovConfig {
@@ -64,7 +71,14 @@ export function getVoices(config: MarkovConfig, nodes: Nodes): Voice[] {
     for (const voice_config of config.voices) {
         if (nodes.getNode(voice_config.start_id)) {
             let voice = new Voice(nodes.getNode(voice_config.start_id)!,
-                                  voice_config.transpose_8va);
+                                  voice_config.transpose_8va,
+                                  voice_config.oscillator,
+                                  voice_config.sustain_volume,
+                                  voice_config.lpf_cutoff_hz,
+                                  voice_config.ping_pong_delay_time,
+                                  voice_config.chorus_depth,
+                                  voice_config.pan,
+                                  voice_config.volume);
             voices.push(voice);
         } else {
             throw new Error(`setting up voices: non-existent node ID, ${voice_config.start_id.toString()}`);
