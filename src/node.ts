@@ -61,20 +61,15 @@ export class Node {
             return null
         }
         
-        for (let i: number = 0; i < this.cumulative_weights.length; i++) {
-            if (i == 0) {
-                if (p < this.cumulative_weights[i]) {
-                    return this.next_nodes[i][0]
-                }
-            } else {
-                if (p < this.cumulative_weights[i] && p >= this.cumulative_weights[i-1]) {
-                    return this.next_nodes[i][0]
-                }
+        let ret = this.next_nodes[0][0]
+        for (let i: number = 0; i < this.cumulative_weights.length - 1; i++) {
+            if (p < this.cumulative_weights[i]) {
+                return ret;
             }
+            ret = this.next_nodes[i+1][0]
         }
-        
         console.log(`did not expect probability, ${p}, to exceed ${this.cumulative_weights.at(-1)}`)
-        return null;
+        return ret;
     }
     
     private id: string;
