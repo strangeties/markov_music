@@ -1,0 +1,204 @@
+{
+    "_comment": "Based on https://teropa.info/blog/2017/01/23/terry-rileys-in-c.html",
+    
+    "nodes": [
+        {
+            "id": "1p1",
+            "note": "e3",
+            "note_duration": "4n",
+            "next_node_duration": "4n",
+            "next_nodes": [
+                {
+                    "id": "1p2",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "1p2",
+            "note": "e3",
+            "note_duration": "4n",
+            "next_node_duration": "4n",
+            "next_nodes": [
+                {
+                    "id": "1p3",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "1p3",
+            "note": "e3",
+            "note_duration": "4n",
+            "next_node_duration": "4n",
+            "next_nodes": [
+                {
+                    "id": "1p1",
+                    "weight": 1
+                },
+                {
+                    "id": "2p1",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "2p1",
+            "note": "e3",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "2p2",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "2p2",
+            "note": "f3",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "2p3",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "2p3",
+            "note": "e3",
+            "note_duration": "4n",
+            "next_node_duration": "4n",
+            "next_nodes": [
+                {
+                    "id": "2p1",
+                    "weight": 1
+                },
+                {
+                    "id": "3p1",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "3p1",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "3p2",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "3p2",
+            "note": "e3",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "3p3",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "3p3",
+            "note": "f3",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "3p4",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "3p4",
+            "note": "e3",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "3p1",
+                    "weight": 1
+                },
+                {
+                    "id": "4p1",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "4p1",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "4p2",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "4p2",
+            "note": "e3",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "4p3",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "4p3",
+            "note": "f3",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "4p4",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "4p4",
+            "note": "g3",
+            "note_duration": "8n",
+            "next_node_duration": "8n",
+            "next_nodes": [
+                {
+                    "id": "4p1",
+                    "weight": 1
+                },
+                {
+                    "id": "END",
+                    "weight": 1
+                }
+            ]
+        },
+        {
+            "id": "END",
+            "note_duration": "1n",
+            "next_node_duration": "1n"
+        }
+    ],
+    
+    "voices": [
+        {
+            "start_id": "1p1",
+            "transpose_8va": 0
+        },
+        {
+            "start_id": "1p1",
+            "transpose_8va": 1
+        }
+    ]
+}
