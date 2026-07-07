@@ -68,7 +68,6 @@ export class Node {
             }
             ret = this.next_nodes[i+1][0]
         }
-        console.log(`did not expect probability, ${p}, to exceed ${this.cumulative_weights.at(-1)}`)
         return ret;
     }
     
