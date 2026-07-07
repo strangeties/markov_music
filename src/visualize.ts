@@ -19,9 +19,9 @@ interface GraphData {
     links: CustomLink[];
 }
 
-//function zoomed(event) {
-//    chartGroup.attr("transform", event.transform);
-//}
+function getRandomColor() {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+}
 
 // 3. Render function
 export function createForceGraph(element_id: string, markov_config: MarkovConfig) {
@@ -34,7 +34,7 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
             weight: Tone.Frequency(node_config.next_node_duration).toTicks(),
             is_rest: !node_config.note,
             x: 100 * i - 100 * markov_config.nodes.length / 2,
-            y: window.innerHeight / 2 + Math.random() * 500 - 250
+            y: node_config.id.endsWith("p1") ? window.innerHeight / 2 : window.innerHeight / 2 - Math.random() * 500
         };
         nodes.push(node)
         
@@ -73,36 +73,43 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
     const simulation = d3.forceSimulation<CustomNode>(nodes)
         .force('link', d3.forceLink<CustomNode, CustomLink>(links)
                .id(d => d.id)
-               .strength(0.1))
+               .strength(d => 0.3 - 0.1 * (1-Math.exp(-d.weight/400))))
         .force('charge', d3.forceManyBody()
                .strength(-300));
 
     // 3. Render Link Elements
     const link = svg.append('g')
-        .attr('stroke', '#999')
+        .attr('stroke', '#36281d')
         .attr('stroke-opacity', 0.6)
+        .attr('stroke-width', 4)
+        .attr('fill-opacity', 0)
         .selectAll('line')
         .data(links)
-        .join('line')
-        .attr('stroke-width', (d: CustomLink) => Math.sqrt(d.weight));
+        .join('path')
+        .attr("marker-mid", "url(#arrow)");
 
     // 4. Render Node Elements
     const node = svg.append('g')
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 1.5)
+        .attr('stroke', '#36281d')
+        .attr('stroke-width', 4)
         .selectAll('circle')
         .data(nodes)
         .join('circle')
-        .attr('r', 8)
-        .attr('fill', '#42b983');
+        .attr('r', (d: CustomNode) => 12 + 24 * (1-Math.exp(-d.weight/400)))
+        .attr('fill', (d: CustomNode) => d.is_rest ? '#FFFFFF' : '#E4B142');
 
     // 5. Update Positions via Tick Event
     simulation.on('tick', () => {
-        link
-          .attr('x1', (d: CustomLink) => (d.source as CustomNode).x ?? 0)
-          .attr('y1', (d: CustomLink) => (d.source as CustomNode).y ?? 0)
-          .attr('x2', (d: CustomLink) => (d.target as CustomNode).x ?? 0)
-          .attr('y2', (d: CustomLink) => (d.target as CustomNode).y ?? 0);
+        link.attr("d", function(d) {
+            var dx = (d.target as CustomNode)!.x! - (d.source as CustomNode)!.x!,
+                dy = (d.target as CustomNode)!.y! - (d.source as CustomNode)!.y!,
+                dr = Math.sqrt(dx * dx + dy * dy);
+            return "M" + (d.source as CustomNode).x +
+                    "," + (d.source as CustomNode).y +
+                    "A" + dr + "," + dr + " 0 0,1 " +
+                    (d.target as CustomNode).x + "," +
+                    (d.target as CustomNode).y;
+        });
 
         node
           .attr('cx', (d: CustomNode) => d.x ?? 0)
