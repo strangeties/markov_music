@@ -33,17 +33,17 @@ function getBisectedCircle(x: number, y: number, radius: number) {
             `A${radius},${radius},0,1,1,${x+1},${mid_y}`;
 }
 
-function getBisectedArc(x_source: number, x_target: number,
-                        y_source: number, y_target: number,
-                        radius_multiplier: number) {
+function getBisectedArc(x_source: number, y_source: number,
+                        x_target: number, y_target: number,
+                        source_is_odd: boolean, radius_multiplier: number) {
     let dx = x_target - x_source;
     let dy = y_target - y_source;
     
     let x_center = (x_source + x_target) / 2;
     let y_center = (y_source + y_target) / 2;
-    let is_odd = (d.source as CustomNode).is_odd! ? 1 : 0;
-    let dx_mid = radius_multiplier * ((d.source as CustomNode).is_odd! ? 1 : -1) * dy / 2;
-    let dy_mid = radius_multiplier * ((d.source as CustomNode).is_odd! ? -1 : 1) * dx / 2;
+    let is_odd = source_is_odd ? 1 : 0;
+    let dx_mid = radius_multiplier * (source_is_odd ? 1 : -1) * dy / 2;
+    let dy_mid = radius_multiplier * (source_is_odd ? -1 : 1) * dx / 2;
     let x_mid = x_center + dx_mid;
     let y_mid = y_center + dy_mid;
     
@@ -52,8 +52,8 @@ function getBisectedArc(x_source: number, x_target: number,
     let r = h/2 + w*w/h/8;
     
     return `M${x_source},${y_source},` +
-            `A${r},${r},0,0,${is_odd},${x_mid},${y_mid},` +
-            `A${r},${r},0,0,${is_odd},${x_target},${y_target}`;
+            `A${r},${r},0,0,${source_is_odd?1:0},${x_mid},${y_mid},` +
+            `A${r},${r},0,0,${source_is_odd?1:0},${x_target},${y_target}`;
 }
 
 // 3. Render function
@@ -164,11 +164,11 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
             } else if (source_id < target_id) {
                 return getBisectedArc((d.source as CustomNode).x!, (d.source as CustomNode).y!,
                                       (d.target as CustomNode).x!, (d.target as CustomNode).y!,
-                                      0.6);
+                                      (d.source as CustomNode).is_odd!, 0.6);
             } else {
                 return getBisectedArc((d.source as CustomNode).x!, (d.source as CustomNode).y!,
                                       (d.target as CustomNode).x!, (d.target as CustomNode).y!,
-                                      0.75);
+                                      true, 0.75);
             }
         });
 
