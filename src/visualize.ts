@@ -26,6 +26,36 @@ function getRandomColor() {
     return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
 }
 
+function getBisectedCircle(x: number, y: number, radius: number) {
+    let mid_y = y + 2*radius;
+    return `M${x},${y},` +
+            `A${radius},${radius},0,1,1,${x},${mid_y},` +
+            `A${radius},${radius},0,1,1,${x+1},${mid_y}`;
+}
+
+function getBisectedArc(x_source: number, x_target: number,
+                        y_source: number, y_target: number,
+                        radius_multiplier: number) {
+    let dx = x_target - x_source;
+    let dy = y_target - y_source;
+    
+    let x_center = (x_source + x_target) / 2;
+    let y_center = (y_source + y_target) / 2;
+    let is_odd = (d.source as CustomNode).is_odd! ? 1 : 0;
+    let dx_mid = radius_multiplier * ((d.source as CustomNode).is_odd! ? 1 : -1) * dy / 2;
+    let dy_mid = radius_multiplier * ((d.source as CustomNode).is_odd! ? -1 : 1) * dx / 2;
+    let x_mid = x_center + dx_mid;
+    let y_mid = y_center + dy_mid;
+    
+    let w = Math.sqrt(dx*dx + dy*dy);
+    let h = Math.sqrt(dx_mid*dx_mid + dy_mid*dy_mid);
+    let r = h/2 + w*w/h/8;
+    
+    return `M${x_source},${y_source},` +
+            `A${r},${r},0,0,${is_odd},${x_mid},${y_mid},` +
+            `A${r},${r},0,0,${is_odd},${x_target},${y_target}`;
+}
+
 // 3. Render function
 export function createForceGraph(element_id: string, markov_config: MarkovConfig) {
     let nodes : CustomNode[] = []
@@ -130,63 +160,16 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
             let target_id = (d.target as CustomNode).id;
             
             if (source_id == target_id) {
-                let x = (d.source as CustomNode).x!;
-                let y = (d.source as CustomNode).y!;
-                let r: number = 50;
-                let mid_y = y + 2*r;
-                return `M${x},${y},` +
-                `A${r},${r},0,1,1,${x},${mid_y},` +
-                `A${r},${r},0,1,1,${x+1},${mid_y}`;
+                return getBisectedCircle((d.source as CustomNode).x!, (d.source as CustomNode).y!, 50);
+            } else if (source_id < target_id) {
+                return getBisectedArc((d.source as CustomNode).x!, (d.source as CustomNode).y!,
+                                      (d.target as CustomNode).x!, (d.target as CustomNode).y!,
+                                      0.6);
+            } else {
+                return getBisectedArc((d.source as CustomNode).x!, (d.source as CustomNode).y!,
+                                      (d.target as CustomNode).x!, (d.target as CustomNode).y!,
+                                      0.75);
             }
-            
-            if (source_id < target_id) {
-                let x_source = (d.source as CustomNode).x!;
-                let y_source = (d.source as CustomNode).y!;
-                let x_target = (d.target as CustomNode).x!;
-                let y_target = (d.target as CustomNode).y!;
-                
-                let dx = x_target - x_source;
-                let dy = y_target - y_source;
-                
-                let x_center = (x_source + x_target) / 2;
-                let y_center = (y_source + y_target) / 2;
-                let is_odd = (d.source as CustomNode).is_odd! ? 1 : 0;
-                let dx_mid = 0.6 * ((d.source as CustomNode).is_odd! ? 1 : -1) * dy / 2;
-                let dy_mid = 0.6 * ((d.source as CustomNode).is_odd! ? -1 : 1) * dx / 2;
-                let x_mid = x_center + dx_mid;
-                let y_mid = y_center + dy_mid;
-                
-                let w = Math.sqrt(dx*dx + dy*dy);
-                let h = Math.sqrt(dx_mid*dx_mid + dy_mid*dy_mid);
-                let r = h/2 + w*w/h/8;
-                
-                return `M${x_source},${y_source},` +
-                        `A${r},${r},0,0,${is_odd},${x_mid},${y_mid},` +
-                        `A${r},${r},0,0,${is_odd},${x_target},${y_target}`;
-            }
-            
-            let x_source = (d.source as CustomNode).x!;
-            let y_source = (d.source as CustomNode).y!;
-            let x_target = (d.target as CustomNode).x!;
-            let y_target = (d.target as CustomNode).y!;
-            
-            let dx = x_target - x_source;
-            let dy = y_target - y_source;
-            
-            let x_center = (x_source + x_target) / 2;
-            let y_center = (y_source + y_target) / 2;
-            let dx_mid = 0.75 * dy / 2;
-            let dy_mid = - 0.75 * dx / 2;
-            let x_mid = x_center + dx_mid;
-            let y_mid = y_center + dy_mid;
-            
-            let w = Math.sqrt(dx*dx + dy*dy);
-            let h = Math.sqrt(dx_mid*dx_mid + dy_mid*dy_mid);
-            let r = h/2 + w*w/h/8;
-            
-            return `M${x_source},${y_source},` +
-                    `A${r},${r},0,0,1,${x_mid},${y_mid},` +
-                    `A${r},${r},0,0,1,${x_target},${y_target}`;
         });
 
         node
