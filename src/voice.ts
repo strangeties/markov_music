@@ -2,6 +2,9 @@ import * as Tone from 'tone';
 
 import { Node } from "./node.ts";
 
+function getRandomColor(): string {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+}
 
 export class Voice {
     public constructor(node: Node,
@@ -50,6 +53,8 @@ export class Voice {
         }
         this.instrument.chain(...this.filters, Tone.Destination);
         this.transpose_8va = transpose_8va;
+        
+        this.color = getRandomColor();
     }
     
     public playAndUpdate(node: Node | null) {
@@ -79,10 +84,19 @@ export class Voice {
         return this.next_node_time_in_ticks;
     }
     
+    public getColor() : string {
+        if (this.color) {
+            return this.color
+        }
+        return '#000000';
+    }
+    
     private next_node: Node | null;
     private next_node_time_in_ticks: number;
     
     private instrument: Tone.Synth;
     private filters: any[];
     private transpose_8va: number | null;
+    
+    private color: string | null;
 }

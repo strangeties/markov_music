@@ -22,10 +22,6 @@ interface GraphData {
     links: CustomLink[];
 }
 
-function getRandomColor() {
-    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-}
-
 function getBisectedCircle(x: number, y: number, radius: number) {
     let mid_y = y + 2*radius;
     return `M${x},${y},` +
@@ -120,7 +116,6 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
     svg.append("defs")
         .append("marker").data(links)
             .attr("id", "arrowhead")
-//            .attr("viewBox", "0 -5 10 10")
             .attr("viewBox", "-10 -5 10 10")
             .attr("refX", 0)
             .attr("refY", 0)
@@ -151,6 +146,7 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
         .data(nodes)
         .join('circle')
         .attr('r', (d: CustomNode) => d.radius)
+        .attr('id', (d: CustomNode) => d.id)
         .attr('fill', (d: CustomNode) => d.is_rest ? '#FFFFFF' : '#E4B142');
 
     // 5. Update Positions via Tick Event
