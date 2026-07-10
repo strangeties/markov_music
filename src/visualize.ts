@@ -110,7 +110,9 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
                .id(d => d.id)
                .strength(d => d.force))
         .force('charge', d3.forceManyBody()
-               .strength(-300));
+               .strength(-300))
+        .force("y", d3.forceY(0)
+               .strength(0.02));
 
     // 3. Render Link Elements
     svg.append("defs")
@@ -181,5 +183,7 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
             link.attr("transform", event.transform.toString());
         });
     svg.call(zoom);
+    
+    return simulation;
 }
 

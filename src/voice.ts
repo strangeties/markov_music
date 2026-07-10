@@ -19,6 +19,7 @@ export class Voice {
         this.next_node = node;
         this.next_node_time_in_ticks = 0;
         
+        this.volume = volume;
         this.instrument = new Tone.Synth();
         this.filters = []
         if (oscillator) {
@@ -84,9 +85,16 @@ export class Voice {
         return this.next_node_time_in_ticks;
     }
     
+    public getVolume(): number {
+        if (this.volume) {
+            return this.volume;
+        }
+        return -10;
+    }
+    
     public getColor() : string {
         if (this.color) {
-            return this.color
+            return this.color;
         }
         return '#000000';
     }
@@ -97,6 +105,7 @@ export class Voice {
     private instrument: Tone.Synth;
     private filters: any[];
     private transpose_8va: number | null;
+    private volume: number | null;
     
     private color: string | null;
 }
