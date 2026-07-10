@@ -6,11 +6,14 @@ import { Nodes, getVoices, NodeConfig, VoiceConfig, MarkovConfig } from "./nodes
 export interface CustomNode extends d3.SimulationNodeDatum {
     id: string;
     weight: number;
+    radius: number;
     is_rest: boolean;
+    is_odd: boolean;
 }
 
 export interface CustomLink extends d3.SimulationLinkDatum<CustomNode> {
     weight: number;
+    force: number;
     likelihood: number;
 }
 
@@ -29,10 +32,15 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
     let links: CustomLink[] = []
     let i = 0
     for (const node_config of markov_config.nodes) {
+        let num_ticks = Tone.Time(node_config.next_node_duration).toTicks();
+        let tick_factor = 1 - Math.exp(-num_ticks / 400);
+        
         let node: CustomNode = {
             id: node_config.id,
-            weight: Tone.Frequency(node_config.next_node_duration).toTicks(),
+            weight: num_ticks,
+            radius: 12 + 24 * tick_factor,
             is_rest: !node_config.note,
+            is_odd: i % 2 == 1,
             x: 100 * i - 100 * markov_config.nodes.length / 2,
             y: node_config.id.endsWith("p1") ? window.innerHeight / 2 : window.innerHeight / 2 - Math.random() * 500
         };
@@ -48,6 +56,7 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
                     source: node.id,
                     target: next_node_config.id,
                     weight: node.weight,
+                    force: 0.3 - 0.2 * tick_factor,
                     likelihood: next_node_config.weight / total_weight
                 };
                 links.push(link)
@@ -73,42 +82,111 @@ export function createForceGraph(element_id: string, markov_config: MarkovConfig
     const simulation = d3.forceSimulation<CustomNode>(nodes)
         .force('link', d3.forceLink<CustomNode, CustomLink>(links)
                .id(d => d.id)
-               .strength(d => 0.3 - 0.1 * (1-Math.exp(-d.weight/400))))
+               .strength(d => d.force))
         .force('charge', d3.forceManyBody()
                .strength(-300));
 
     // 3. Render Link Elements
-    const link = svg.append('g')
-        .attr('stroke', '#36281d')
-        .attr('stroke-opacity', 0.6)
+    svg.append("defs")
+        .append("marker").data(links)
+            .attr("id", "arrowhead")
+//            .attr("viewBox", "0 -5 10 10")
+            .attr("viewBox", "-10 -5 10 10")
+            .attr("refX", 0)
+            .attr("refY", 0)
+            .attr("markerWidth", 5)
+            .attr("markerHeight", 5)
+            .attr("orient", "auto")
+            .attr('stroke', '#65452F')
+            .attr('fill', '#65452F')
+            .attr('fill-opacity', 1.0)
+        .append("path")
+            .attr("d", "M-10,-5L0,0L-10,5");
+    
+    const link = svg.append('g').data(links)
+        .attr('stroke', '#65452F')
+        .attr('stroke-opacity', 1.0)
         .attr('stroke-width', 4)
         .attr('fill-opacity', 0)
-        .selectAll('line')
+        .selectAll('path')
         .data(links)
         .join('path')
-        .attr("marker-mid", "url(#arrow)");
+        .attr("marker-mid", d => "url(#arrowhead)");
 
     // 4. Render Node Elements
     const node = svg.append('g')
-        .attr('stroke', '#36281d')
+        .attr('stroke', '#111729')
         .attr('stroke-width', 4)
         .selectAll('circle')
         .data(nodes)
         .join('circle')
-        .attr('r', (d: CustomNode) => 12 + 24 * (1-Math.exp(-d.weight/400)))
+        .attr('r', (d: CustomNode) => d.radius)
         .attr('fill', (d: CustomNode) => d.is_rest ? '#FFFFFF' : '#E4B142');
 
     // 5. Update Positions via Tick Event
     simulation.on('tick', () => {
         link.attr("d", function(d) {
-            var dx = (d.target as CustomNode)!.x! - (d.source as CustomNode)!.x!,
-                dy = (d.target as CustomNode)!.y! - (d.source as CustomNode)!.y!,
-                dr = Math.sqrt(dx * dx + dy * dy);
-            return "M" + (d.source as CustomNode).x +
-                    "," + (d.source as CustomNode).y +
-                    "A" + dr + "," + dr + " 0 0,1 " +
-                    (d.target as CustomNode).x + "," +
-                    (d.target as CustomNode).y;
+            let source_id = (d.source as CustomNode).id;
+            let target_id = (d.target as CustomNode).id;
+            
+            if (source_id == target_id) {
+                let x = (d.source as CustomNode).x!;
+                let y = (d.source as CustomNode).y!;
+                let r: number = 50;
+                let mid_y = y + 2*r;
+                return `M${x},${y},` +
+                `A${r},${r},0,1,1,${x},${mid_y},` +
+                `A${r},${r},0,1,1,${x+1},${mid_y}`;
+            }
+            
+            if (source_id < target_id) {
+                let x_source = (d.source as CustomNode).x!;
+                let y_source = (d.source as CustomNode).y!;
+                let x_target = (d.target as CustomNode).x!;
+                let y_target = (d.target as CustomNode).y!;
+                
+                let dx = x_target - x_source;
+                let dy = y_target - y_source;
+                
+                let x_center = (x_source + x_target) / 2;
+                let y_center = (y_source + y_target) / 2;
+                let is_odd = (d.source as CustomNode).is_odd! ? 1 : 0;
+                let dx_mid = 0.6 * ((d.source as CustomNode).is_odd! ? 1 : -1) * dy / 2;
+                let dy_mid = 0.6 * ((d.source as CustomNode).is_odd! ? -1 : 1) * dx / 2;
+                let x_mid = x_center + dx_mid;
+                let y_mid = y_center + dy_mid;
+                
+                let w = Math.sqrt(dx*dx + dy*dy);
+                let h = Math.sqrt(dx_mid*dx_mid + dy_mid*dy_mid);
+                let r = h/2 + w*w/h/8;
+                
+                return `M${x_source},${y_source},` +
+                        `A${r},${r},0,0,${is_odd},${x_mid},${y_mid},` +
+                        `A${r},${r},0,0,${is_odd},${x_target},${y_target}`;
+            }
+            
+            let x_source = (d.source as CustomNode).x!;
+            let y_source = (d.source as CustomNode).y!;
+            let x_target = (d.target as CustomNode).x!;
+            let y_target = (d.target as CustomNode).y!;
+            
+            let dx = x_target - x_source;
+            let dy = y_target - y_source;
+            
+            let x_center = (x_source + x_target) / 2;
+            let y_center = (y_source + y_target) / 2;
+            let dx_mid = 0.75 * dy / 2;
+            let dy_mid = - 0.75 * dx / 2;
+            let x_mid = x_center + dx_mid;
+            let y_mid = y_center + dy_mid;
+            
+            let w = Math.sqrt(dx*dx + dy*dy);
+            let h = Math.sqrt(dx_mid*dx_mid + dy_mid*dy_mid);
+            let r = h/2 + w*w/h/8;
+            
+            return `M${x_source},${y_source},` +
+                    `A${r},${r},0,0,1,${x_mid},${y_mid},` +
+                    `A${r},${r},0,0,1,${x_target},${y_target}`;
         });
 
         node
