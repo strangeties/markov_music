@@ -49,7 +49,7 @@ function playAndUpdateVoiceAndScheduleNextEvent(voice: Voice, nodes: Nodes) {
         return;
     }
     let next_node = nodes.getNode(next_node_id)
-    // Play next node sound.
+    // Play current node sound, and then update the current node with the next node.
     voice.playAndUpdate(next_node)
     
     // Update node color.
@@ -58,22 +58,26 @@ function playAndUpdateVoiceAndScheduleNextEvent(voice: Voice, nodes: Nodes) {
         if (target_node) {
             // Recolor node
             target_node.color = voice.getColor();
+            target_node.perturbation_color = voice.getColor();
+            target_node.perturbation_time = d3.now();
             
             // Bump the note up slightly, and restart simulation.
+            if (!target_node.is_rest) {
             let simulation = _force_graph.simulation;
-            if (simulation) {
-                let target_node_sim = simulation.nodes().find((d: CustomNode) => d.id === node_id);
-                if (target_node_sim) {
-                    target_node_sim.y = target_node_sim.y - (Math.random() * 0.7 + 0.3) * target_node_sim.radius * 10 * Math.pow(1.122, voice.getVolume());
-                    target_node_sim.x = target_node_sim.x + Math.random() * 100 - 50;
+                if (simulation) {
+                    let target_node_sim = simulation.nodes().find((d: CustomNode) => d.id === node_id);
+                    if (target_node_sim) {
+                        target_node_sim.y = target_node_sim.y - (Math.random() * 0.7 + 0.3) * target_node_sim.radius * 10 * Math.pow(1.122, voice.getVolume());
+                        target_node_sim.x = target_node_sim.x + Math.random() * 100 - 50;
+                    }
+                    simulation.alpha(0.3);
+                    simulation.restart();
                 }
-                simulation.alpha(0.3);
-                simulation.restart();
             }
         }
     }
     // Schedule next event.
-    Tone.Transport.schedule(function(time){
+    Tone.Transport.schedule((time) => {
         playAndUpdateVoiceAndScheduleNextEvent(voice, nodes)
     }, `${voice.getNextNodeTimeInTicks()}i`);
     

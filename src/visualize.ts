@@ -4,6 +4,7 @@ import * as Tone from 'tone';
 import { Nodes, getVoices, NodeConfig, VoiceConfig, MarkovConfig } from "./nodes.ts";
 
 const NODE_FILL_COLOR: string = '#E4B142';
+const NODE_REST_FILL_COLOR: string = '#FFFFFF';
 const LINK_LINE_COLOR: string = '#65452F';
 
 export interface CustomNode extends d3.SimulationNodeDatum {
@@ -12,7 +13,11 @@ export interface CustomNode extends d3.SimulationNodeDatum {
     radius: number;
     is_rest: boolean;
     is_odd: boolean;
-    color: string;
+    color: string; // Current color
+    
+    color_at_rest: string;
+    perturbation_color: string | null;
+    perturbation_time: number | null;
 }
 
 export interface CustomLink extends d3.SimulationLinkDatum<CustomNode> {
@@ -68,7 +73,10 @@ export class ForceGraph {
                 is_odd: i % 2 == 1,
                 x: 100 * i - 100 * markov_config.nodes.length / 2,
                 y: node_config.id.endsWith("p1") ? window.innerHeight / 2 : window.innerHeight / 2 - Math.random() * 500,
-                color: NODE_FILL_COLOR
+                color: node_config.note ? NODE_FILL_COLOR : NODE_REST_FILL_COLOR,
+                color_at_rest: node_config.note ? NODE_FILL_COLOR : NODE_REST_FILL_COLOR,
+                perturbation_color: null,
+                perturbation_time: null
             };
             this.nodes.push(node)
             
@@ -190,6 +198,8 @@ export class ForceGraph {
     }
 
     public drawNode(d: CustomNode) {
+        const now = d3.now();
+        
         if (!this.context) {
             console.log('drawNode: context is null : (')
             return;
@@ -201,8 +211,21 @@ export class ForceGraph {
         this.context.arc(d.x!, d.y!, d.radius, 0, 2 * Math.PI);
         
         this.context.globalAlpha = 1.0;
+        
+        if (d.perturbation_time) {
+            const dt = (now - d.perturbation_time) / 3000;
+            if (dt >= 1) {
+                d.perturbation_time = null
+                d.color = d.color_at_rest
+            } else {
+                const color_interpolator = d3.interpolateLab(d.perturbation_color!,
+                                                             d.color_at_rest);
+                d.color = color_interpolator(dt).toString()
+            }
+        }
         this.context.fillStyle = d.color
-        this.context.strokeStyle = "brown";
+        
+        this.context.strokeStyle = LINK_LINE_COLOR;
         this.context.lineWidth = 4;
         
         this.context.fill();
