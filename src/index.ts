@@ -4,7 +4,7 @@ import * as Tone from 'tone';
 import { Node } from "./node.ts";
 import { Voice } from "./voice.ts";
 import { Nodes, getVoices, NodeConfig, VoiceConfig, MarkovConfig } from "./nodes.ts";
-import {createForceGraph, CustomNode} from "./visualize.ts";
+import {ForceGraph, CustomNode} from "./visualize.ts";
 //import in_c_data from "./in_c.json" with { type: "text" };
 import in_c_data from './in_c.json';
 
@@ -12,7 +12,7 @@ let _markov_config: MarkovConfig | null = null
 let _nodes: Nodes | null = null
 let _voices: Voice[] = []
 let _g: any = null
-let _simulation: any = null
+let _force_graph: ForceGraph | null = null
 
 export function setUp() {
     _markov_config = JSON.parse(JSON.stringify(in_c_data)) as MarkovConfig;
@@ -43,28 +43,34 @@ function playAndUpdateVoiceAndScheduleNextEvent(voice: Voice, nodes: Nodes) {
     if (!node) {
         return;
     }
+    let node_id = node.getId();
     let next_node_id = node.selectNextNode()
     if (!next_node_id) {
         return;
     }
     let next_node = nodes.getNode(next_node_id)
-    // Play sound.
+    // Play next node sound.
     voice.playAndUpdate(next_node)
+    
     // Update node color.
-    if (_g) {
-        let target_node = _g.selectAll('circle')
-                            .filter((d: CustomNode) => d.id === next_node_id);
-        // TODO: append, exit, transition, remove instead of just changing the static color.
-        target_node.attr("fill", voice.getColor());
-        
-        // Bump the note up slightly, and restart simulation.
-        let target_node_sim = _simulation.nodes().find((d: CustomNode) => d.id === next_node_id);
-        if (target_node_sim) {
-            target_node_sim.y = target_node_sim.y - (Math.random() * 0.7 + 0.3) * target_node_sim.radius * 10 * Math.pow(1.122, voice.getVolume());
-            target_node_sim.x = target_node_sim.x + Math.random() * 100 - 50;
+    if (_force_graph && _force_graph.nodes) {
+        let target_node = _force_graph.nodes.find(node => node.id === node_id)
+        if (target_node) {
+            // Recolor node
+            target_node.color = voice.getColor();
+            
+            // Bump the note up slightly, and restart simulation.
+            let simulation = _force_graph.simulation;
+            if (simulation) {
+                let target_node_sim = simulation.nodes().find((d: CustomNode) => d.id === node_id);
+                if (target_node_sim) {
+                    target_node_sim.y = target_node_sim.y - (Math.random() * 0.7 + 0.3) * target_node_sim.radius * 10 * Math.pow(1.122, voice.getVolume());
+                    target_node_sim.x = target_node_sim.x + Math.random() * 100 - 50;
+                }
+                simulation.alpha(0.3);
+                simulation.restart();
+            }
         }
-        _simulation.alpha(0.3);
-        _simulation.restart();
     }
     // Schedule next event.
     Tone.Transport.schedule(function(time){
@@ -78,7 +84,6 @@ window.addEventListener("load", () => {
     setUp();
     
     if (_markov_config) {
-        _simulation = createForceGraph('#graph-container', _markov_config);
-        _g = d3.select("svg").selectAll("g");
+        _force_graph = new ForceGraph('#graph-container', _markov_config);
     }
 });
