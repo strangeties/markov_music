@@ -178,22 +178,26 @@ export class ForceGraph {
         let id2 = (d.target as CustomNode).id!;
         
         if (id1 == id2) {
-            this.drawArcBetweenPoints(this.context, x1, y1, x2, y2, 50, false)
-            this.drawArrowAtArcMidpoint(this.context, x1, y1, x1, y1 + 100, x2-10, y2)
+            let r = (d.source as CustomNode).radius;
+            r = r * r / 10;
+            this.drawArcBetweenPoints(this.context, x1, y1, x2, y2, r, false)
+            this.drawArrowAtArcMidpoint(this.context, x1, y1, x1, y1 + 2 * r, x2 - 10, y2, 4 * r)
         } else if (id1 < id2) {
             const mid_arc_points = this.drawArcBetweenPointsWithRadiusMultipler(this.context,
                                                                            x1, y1,
                                                                            x2, y2, 0.5, (d.source as CustomNode).is_odd);
             this.drawArrowAtArcMidpoint(this.context, x1, y1,
                                    mid_arc_points[0], mid_arc_points[1],
-                                   x2, y2);
+                                   x2, y2,
+                                   Math.hypot((y2 - y1), (x2 - x1)));
         } else {
             const mid_arc_points = this.drawArcBetweenPointsWithRadiusMultipler(this.context,
                                                                            x1, y1,
                                                                            x2, y2, 0.7, false);
             this.drawArrowAtArcMidpoint(this.context, x1, y1,
                                    mid_arc_points[0], mid_arc_points[1],
-                                   x2, y2);
+                                   x2, y2,
+                                   Math.hypot((y2 - y1), (x2 - x1)));
         }
     }
 
@@ -318,13 +322,14 @@ export class ForceGraph {
 
     private drawArrowAtArcMidpoint(ctx: any, x1: number, y1: number, // Start
                                     x2: number, y2: number, // Midpoint
-                                    x3: number, y3: number) { // Endpoint
+                                    x3: number, y3: number,
+                                    distance_multipler: number) { // Endpoint
         ctx.save();
         
         ctx.translate(x2, y2);
         ctx.rotate(Math.atan2(y3-y1, x3-x1));
         
-        const arrow_size = 20;
+        const arrow_size = Math.max(20, distance_multipler / 10);
         
         ctx.beginPath();
         ctx.moveTo(0, 0); // Tip of arrow
