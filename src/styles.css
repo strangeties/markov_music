@@ -1,0 +1,24 @@
+#play-note {
+    background-color: #65452F;
+    border: none;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    font-family: arial;
+    cursor: pointer;
+    
+    min-width: 120px;
+}
+
+#description {
+    font-size: 12px;
+    color: #65452F;
+    font-family: arial;
+}
+
+p {
+  margin-block: 12px;
+}

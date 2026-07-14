@@ -7,6 +7,7 @@ import { Nodes, getVoices, NodeConfig, VoiceConfig, MarkovConfig } from "./nodes
 import {ForceGraph, CustomNode} from "./visualize.ts";
 //import in_c_data from "./in_c.json" with { type: "text" };
 import in_c_data from './in_c.json';
+import './styles.css';
 
 let _markov_config: MarkovConfig | null = null
 let _nodes: Nodes | null = null

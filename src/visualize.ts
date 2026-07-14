@@ -26,34 +26,10 @@ export interface CustomLink extends d3.SimulationLinkDatum<CustomNode> {
     likelihood: number;
 }
 
-function getBisectedCircle(x: number, y: number, radius: number) {
-    let mid_y = y + 2*radius;
-    return `M${x},${y},` +
-            `A${radius},${radius},0,1,1,${x},${mid_y},` +
-            `A${radius},${radius},0,1,1,${x+1},${mid_y}`;
-}
-
-function getBisectedArc(x_source: number, y_source: number,
-                        x_target: number, y_target: number,
-                        source_is_odd: boolean, radius_multiplier: number) {
-    let dx = x_target - x_source;
-    let dy = y_target - y_source;
+function getTableHeight() {
+    const element = d3.select('#intro-table')!.node()! as HTMLElement;
+    return element.getBoundingClientRect()!.height!;
     
-    let x_center = (x_source + x_target) / 2;
-    let y_center = (y_source + y_target) / 2;
-    let is_odd = source_is_odd ? 1 : 0;
-    let dx_mid = radius_multiplier * (source_is_odd ? 1 : -1) * dy / 2;
-    let dy_mid = radius_multiplier * (source_is_odd ? -1 : 1) * dx / 2;
-    let x_mid = x_center + dx_mid;
-    let y_mid = y_center + dy_mid;
-    
-    let w = Math.sqrt(dx*dx + dy*dy);
-    let h = Math.sqrt(dx_mid*dx_mid + dy_mid*dy_mid);
-    let r = h/2 + w*w/h/8;
-    
-    return `M${x_source},${y_source},` +
-            `A${r},${r},0,0,${source_is_odd?1:0},${x_mid},${y_mid},` +
-            `A${r},${r},0,0,${source_is_odd?1:0},${x_target},${y_target}`;
 }
 
 export class ForceGraph {
@@ -99,8 +75,8 @@ export class ForceGraph {
         }
         
         const dpi = devicePixelRatio;
-        let width =  dpi * window.innerWidth;
-        let height = dpi * window.innerHeight
+        const width =  dpi * window.innerWidth;
+        const height = dpi * (window.innerHeight - getTableHeight());
         this.canvas = d3.select(element_id).append("canvas")
             .attr("width", width)
             .attr("height", height)
@@ -153,12 +129,18 @@ export class ForceGraph {
         this.context.save();
 
         this.context.resetTransform();
-        const dpi = devicePixelRatio;
-        const height = dpi * window.innerHeight;
-        this.context.clearRect(0, 0, dpi * window.innerWidth,  height);
         
-        this.transform_y = height / 2;
-        this.context.translate(this.transform_x, this.transform_y);
+        // Draw a border.
+        const dpi = devicePixelRatio;
+        const width =  dpi * window.innerWidth;
+        const height = dpi * (window.innerHeight - getTableHeight());
+        this.context.clearRect(0, 0, width, height);
+        this.context.lineWidth = 1;
+        this.context.strokeStyle = LINK_LINE_COLOR;
+        this.context.strokeRect(0, 0, width, height);
+        
+        // Update transform.
+        this.context.translate(this.transform_x, height / 2);
         this.context.scale(this.transform_k, this.transform_k);
 
         this.links.forEach((d) => {this.drawLink(d)});
