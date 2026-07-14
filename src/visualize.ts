@@ -58,8 +58,6 @@ function getBisectedArc(x_source: number, y_source: number,
 
 export class ForceGraph {
     public constructor(element_id: string, markov_config: MarkovConfig) {
-        this.transform = d3.zoomIdentity;
-        
         let i = 0;
         for (const node_config of markov_config.nodes) {
             let num_ticks = Tone.Time(node_config.next_node_duration).toTicks();
@@ -117,7 +115,6 @@ export class ForceGraph {
             return;
         }
         this.context.scale(dpi, dpi);
-        
 
         const zoom = d3.zoom<HTMLCanvasElement, unknown>()
         .scaleExtent([0.01, 1]) // Set minimum and maximum zoom levels
@@ -125,10 +122,16 @@ export class ForceGraph {
             if (!this.context) {
                 console.log('in zoom, context is null : (')
             }
-            this.transform = event.transform;
+            this.transform_x = event.transform.x;
+            this.transform_k = event.transform.k;
             this.draw();
         });
         this.canvas.call(zoom);
+        
+        this.transform_x = width / 2 - this.nodes[0].x!;
+        this.transform_y = height / 2;
+        this.transform_k = 1;
+        this.canvas.call(zoom.transform, d3.zoomIdentity.translate(this.transform_x, this.transform_y).scale(this.transform_k));
         
         this.simulation = d3.forceSimulation<CustomNode>(this.nodes)
             .force('link', d3.forceLink<CustomNode, CustomLink>(this.links)
@@ -151,12 +154,12 @@ export class ForceGraph {
 
         this.context.resetTransform();
         const dpi = devicePixelRatio;
-        this.context.clearRect(0, 0, dpi * window.innerWidth,  dpi * window.innerHeight);
+        const height = dpi * window.innerHeight;
+        this.context.clearRect(0, 0, dpi * window.innerWidth,  height);
         
-        if (this.transform) {
-            this.context.translate(this.transform.x, this.transform.y);
-            this.context.scale(this.transform.k, this.transform.k);
-        }
+        this.transform_y = height / 2;
+        this.context.translate(this.transform_x, this.transform_y);
+        this.context.scale(this.transform_k, this.transform_k);
 
         this.links.forEach((d) => {this.drawLink(d)});
         this.nodes.forEach((n) => {this.drawNode(n)});
@@ -241,7 +244,9 @@ export class ForceGraph {
     private context: CanvasRenderingContext2D | null = null;
     nodes: CustomNode[] = [];
     links: CustomLink[] = [];
-    transform: any;
+    transform_x: number = 0;
+    transform_y: number = 0;
+    transform_k: number = 1;
     
     private drawArcBetweenPoints(ctx: any, x1: number, y1: number,
                                   x2: number, y2: number,
