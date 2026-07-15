@@ -15,38 +15,66 @@ let _voices: Voice[] = []
 let _g: any = null
 let _force_graph: ForceGraph | null = null
 
+let _state: string = 'refreshed'
+let _state_num_completed_voices: number = 0
+
 export function setUp() {
     _markov_config = JSON.parse(JSON.stringify(in_c_data)) as MarkovConfig;
     _nodes = new Nodes(_markov_config);
     _voices = getVoices(_markov_config, _nodes);
 }
 
-export function playNote() {
-    if (_nodes) {
-        
-        Tone.Transport.bpm.value = 120;
-        
-        for (let voice of _voices) {
-            Tone.Transport.schedule(function(time){
-                playAndUpdateVoiceAndScheduleNextEvent(voice, _nodes!)
-            }, 0);
+export function playOrPauseOrRestart() {
+    if (_state === 'refreshed') {
+        if (_nodes) {
+            
+            Tone.Transport.bpm.value = 120;
+            
+            for (let voice of _voices) {
+                Tone.Transport.schedule(function(time){
+                    playAndUpdateVoiceAndScheduleNextEvent(voice, _nodes!)
+                }, 0);
+            }
+            
+            Tone.Transport.start()
+        } else {
+            console.log(`Error: failed to load _nodes!`);
         }
         
-        Tone.Transport.start()
-    } else {
-        console.log(`Error: failed to load _nodes!`);
+        _state = 'playing'
+        d3.select('#play').text('Pause')
+    } else if (_state === 'playing') {
+        _state = 'paused'
+        Tone.Transport.pause();
+        d3.select('#play').text('Continue playing')
+    } else if (_state === 'paused') {
+        _state = 'playing'
+        Tone.Transport.start();
+        d3.select('#play').text('Pause')
+    } else if (_state === 'done') {
+        window.location.reload();
     }
 }
-(window as any).playNote = playNote;
+(window as any).playOrPauseOrRestart = playOrPauseOrRestart;
 
 function playAndUpdateVoiceAndScheduleNextEvent(voice: Voice, nodes: Nodes) {
     let node = voice.getNextNode()
     if (!node) {
+        _state_num_completed_voices = _state_num_completed_voices + 1;
+        if (_state_num_completed_voices >= _voices.length) {
+            _state = 'done'
+            d3.select('#play').text('Refresh to play again')
+        }
         return;
     }
     let node_id = node.getId();
     let next_node_id = node.selectNextNode()
     if (!next_node_id) {
+        _state_num_completed_voices = _state_num_completed_voices + 1;
+        if (_state_num_completed_voices >= _voices.length) {
+            _state = 'done'
+            d3.select('#play').text('Refresh to play again')
+        }
         return;
     }
     let next_node = nodes.getNode(next_node_id)
