@@ -74,9 +74,9 @@ export class ForceGraph {
             i = i + 1
         }
         
-        const dpi = devicePixelRatio;
-        const width =  dpi * window.innerWidth;
-        const height = dpi * (window.innerHeight - getTableHeight());
+        const dpr = devicePixelRatio;
+        const width =  dpr * window.innerWidth;
+        const height = dpr * (window.innerHeight - getTableHeight());
         this.canvas = d3.select(element_id).append("canvas")
             .attr("width", width)
             .attr("height", height)
@@ -85,12 +85,14 @@ export class ForceGraph {
             console.log('canvas is null : (');
             return;
         }
+        this.canvas.width = width;
+        this.canvas.height = height;
         this.context = this.canvas.node()!.getContext("2d");
         if (!this.context) {
             console.error('No context was created : (');
             return;
         }
-        this.context.scale(dpi, dpi);
+        this.context.scale(dpr, dpr);
 
         const zoom = d3.zoom<HTMLCanvasElement, unknown>()
         .scaleExtent([0.01, 1]) // Set minimum and maximum zoom levels
@@ -118,6 +120,9 @@ export class ForceGraph {
             .force("y", d3.forceY(0)
                    .strength(0.02))
             .on("tick", () => {this.draw()});
+        
+        
+        window.addEventListener('resize', this.resizeCanvas);
     }
     
     public draw() {
@@ -131,22 +136,29 @@ export class ForceGraph {
         this.context.resetTransform();
         
         // Draw a border.
-        const dpi = devicePixelRatio;
-        const width =  dpi * window.innerWidth;
-        const height = dpi * (window.innerHeight - getTableHeight());
-        this.context.clearRect(0, 0, width, height);
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.context.lineWidth = 1;
         this.context.strokeStyle = LINK_LINE_COLOR;
-        this.context.strokeRect(0, 0, width, height);
+        this.context.strokeRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Update transform.
-        this.context.translate(this.transform_x, height / 2);
+        this.context.translate(this.transform_x, this.canvas.height / 2);
         this.context.scale(this.transform_k, this.transform_k);
 
         this.links.forEach((d) => {this.drawLink(d)});
         this.nodes.forEach((n) => {this.drawNode(n)});
         
         this.context.restore();
+    }
+    
+    public resizeCanvas() {
+        // 1. Update canvas element dimensions to the current window size
+        const dpr = devicePixelRatio;
+        this.canvas.width = dpr * window.innerWidth;
+        this.canvas.height = dpr * (window.innerHeight - getTableHeight());
+
+        // 2. Redraw your canvas content
+        this.draw();
     }
     
     public drawLink(d: CustomLink) {
